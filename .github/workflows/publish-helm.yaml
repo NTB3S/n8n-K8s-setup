@@ -43,10 +43,9 @@ jobs:
           INCREMENT_TYPE="${{ github.event.inputs.increment_type }}"
           
           # Utilise Python pour lire et incrémenter la version
-          python -c "
+          NEW_VERSION=$(python -c "
           import yaml
           import semver
-          import os
           
           # Lire le fichier Chart.yaml
           chart_path = './Chart.yaml'
@@ -76,19 +75,17 @@ jobs:
           with open(chart_path, 'w') as file:
               yaml.dump(chart, file, default_flow_style=False)
           
-          # Enregistrer la nouvelle version pour les étapes suivantes
-          with open(os.environ['GITHUB_ENV'], 'a') as f:
-              f.write(f'NEW_VERSION={new_version}\\n')
+          # Retourner la nouvelle version pour l'utiliser dans le bash
+          print(new_version)
+          ")
           
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f'new_version={new_version}\\n')
-          "
+          echo "Nouvelle version: $NEW_VERSION"
           
-          # Commit les changements
+          # Commit les changements avec la nouvelle version
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add ./Chart.yaml
-          git commit -m "Mettre à jour la version du Chart à ${{ env.NEW_VERSION }}"
+          git commit -m "Mettre à jour la version du Chart à $NEW_VERSION"
           git push origin main
 
       - name: Set up Helm
