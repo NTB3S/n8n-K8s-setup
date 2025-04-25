@@ -11,4 +11,5 @@ data:
   N8N_HOST: "k8sbys3bstn.com"
   N8N_PATH: "/n8n/"
   WEBHOOK_URL: "http://k8sbys3bstn.com/n8n/"
-  WEBHOOK_TUNNEL_URL: "http://k8sbys3bstn.com/n8n/" 
+  WEBHOOK_TUNNEL_URL: "http://k8sbys3bstn.com/n8n/"
+  VUE_APP_URL_BASE_API: "/n8n/api/"
