@@ -12,7 +12,7 @@ data:
   N8N_WEBHOOK_URL: "https://k8sbys3bstn.com/n8n"
   N8N_ENDPOINT_WEBHOOK: "/n8n/"
   N8N_ENDPOINT_WEBHOOK_TEST: "/n8n/"
-  N8N_ENDPOINT_REST: "n8n/rest"
+  N8N_ENDPOINT_REST: "https://k8sbys3bstn.com/n8n"
 
 
 
