@@ -43,7 +43,7 @@ jobs:
           INCREMENT_TYPE="${{ github.event.inputs.increment_type }}"
           
           # Utilise Python pour lire et incrémenter la version
-          NEW_VERSION=$(python -c "
+          OUTPUT=$(python -c "
           import yaml
           import semver
           
@@ -52,8 +52,9 @@ jobs:
           with open(chart_path, 'r') as file:
               chart = yaml.safe_load(file)
           
-          # Récupérer la version actuelle
+          # Récupérer la version actuelle et le nom
           current_version = chart['version']
+          chart_name = chart['name']
           print(f'Version actuelle: {current_version}')
           
           # Incrémenter la version
@@ -75,11 +76,20 @@ jobs:
           with open(chart_path, 'w') as file:
               yaml.dump(chart, file, default_flow_style=False)
           
-          # Retourner la nouvelle version pour l'utiliser dans le bash
-          print(new_version)
+          # Afficher le nom et la nouvelle version pour les utiliser dans bash
+          print(f'{chart_name}:{new_version}')
           ")
           
+          # Extraire les informations
+          CHART_NAME=$(echo "$OUTPUT" | tail -n 1 | cut -d':' -f1)
+          NEW_VERSION=$(echo "$OUTPUT" | tail -n 1 | cut -d':' -f2)
+          
+          echo "Nom du Chart: $CHART_NAME"
           echo "Nouvelle version: $NEW_VERSION"
+          
+          # Enregistrer les variables pour les étapes suivantes
+          echo "CHART_NAME=$CHART_NAME" >> $GITHUB_ENV
+          echo "CHART_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           
           # Commit les changements avec la nouvelle version
           git config --global user.name 'GitHub Actions'
@@ -102,22 +112,16 @@ jobs:
       
       - name: Package and Push Helm Chart
         run: |
-          # Set variables
-          CHART_DIR="."  # Chart is at root level
-          
-          # Lire les valeurs avec Python pour éviter les problèmes de yq
-          CHART_NAME=$(python -c "import yaml; print(yaml.safe_load(open('./Chart.yaml'))['name'])")
-          CHART_VERSION=$(python -c "import yaml; print(yaml.safe_load(open('./Chart.yaml'))['version'])")
-          
-          echo "Chart name: $CHART_NAME"
-          echo "Chart version: $CHART_VERSION"
+          # Utiliser les variables d'environnement de l'étape précédente
+          echo "Chart name: ${{ env.CHART_NAME }}"
+          echo "Chart version: ${{ env.CHART_VERSION }}"
           
           # Package the chart locally
-          helm package $CHART_DIR
+          helm package .
           
           # Use lowercase repository owner (GitHub Container Registry requirement)
           REPO_OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           
           # Push the chart to GitHub Packages with proper formatting
           echo "Pushing to: oci://ghcr.io/${REPO_OWNER_LC}/charts"
-          helm push "${CHART_NAME}-${CHART_VERSION}.tgz" "oci://ghcr.io/${REPO_OWNER_LC}/charts"
+          helm push "${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz" "oci://ghcr.io/${REPO_OWNER_LC}/charts"
