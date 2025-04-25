@@ -11,4 +11,7 @@ data:
   N8N_EDITOR_BASE_URL: "http://k8sbys3bstn.com/n8n"
   WEBHOOK_URL: "http://k8sbys3bstn.com/n8n"
   N8N_WEBHOOK_URL: "http://k8sbys3bstn.com/n8n"
+  N8N_ENDPOINT_WEBHOOK: "/n8n/"
+  N8N_ENDPOINT_WEBHOOK_TEST: "/n8n/"
+
 
