@@ -1,0 +1,115 @@
+name: Publish Helm Chart
+on:
+  workflow_dispatch:
+    inputs:
+      increment_type:
+        description: 'Type d''incrémentation de version'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # Modifié pour permettre l'écriture du commit
+      packages: write
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Nécessaire pour les opérations Git
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml semver gitpython yq
+
+      - name: Incrémenter la version du Chart
+        id: version
+        run: |
+          # Détermine le type d'incrémentation (utilise patch par défaut en cas de push)
+          INCREMENT_TYPE="${{ github.event.inputs.increment_type || 'patch' }}"
+          
+          # Récupère la version actuelle
+          CURRENT_VERSION=$(yq e '.version' ./Chart.yaml)
+          echo "Version actuelle: $CURRENT_VERSION"
+          
+          # Incrémente la version avec Python
+          NEW_VERSION=$(python -c "
+          import semver
+          
+          current = '$CURRENT_VERSION'
+          increment = '$INCREMENT_TYPE'
+          
+          version = semver.VersionInfo.parse(current)
+          
+          if increment == 'major':
+              new_version = str(version.bump_major())
+          elif increment == 'minor':
+              new_version = str(version.bump_minor())
+          else:
+              new_version = str(version.bump_patch())
+              
+          print(new_version)
+          ")
+          
+          echo "Nouvelle version: $NEW_VERSION"
+          
+          # Met à jour Chart.yaml
+          yq e -i '.version = "'$NEW_VERSION'"' ./Chart.yaml
+          
+          # Enregistre la nouvelle version pour les étapes suivantes
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          # Commit les changements si workflow_dispatch, sinon utilise simplement la version mise à jour
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            git config --global user.name 'GitHub Actions'
+            git config --global user.email 'actions@github.com'
+            git add ./Chart.yaml
+            git commit -m "Mettre à jour la version du Chart à $NEW_VERSION"
+            git push
+          fi
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Package and Push Helm Chart
+        run: |
+          # Set variables
+          CHART_DIR="."  # Chart is at root level
+          CHART_NAME=$(yq e '.name' ./Chart.yaml)
+          CHART_VERSION=$(yq e '.version' ./Chart.yaml)
+          
+          echo "Chart name: $CHART_NAME"
+          echo "Chart version: $CHART_VERSION"
+          
+          # Package the chart locally
+          helm package $CHART_DIR
+          
+          # Use lowercase repository owner (GitHub Container Registry requirement)
+          REPO_OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          
+          # Push the chart to GitHub Packages with proper formatting
+          echo "Pushing to: oci://ghcr.io/${REPO_OWNER_LC}/charts"
+          helm push "${CHART_NAME}-${CHART_VERSION}.tgz" "oci://ghcr.io/${REPO_OWNER_LC}/charts"
