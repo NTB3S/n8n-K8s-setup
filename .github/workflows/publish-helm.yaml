@@ -35,53 +35,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml semver gitpython yq
 
-      - name: Incrémenter la version du Chart
-        id: version
+      - name: Increment Helm chart version
+        id: increment_version
         run: |
-          # Détermine le type d'incrémentation (utilise patch par défaut en cas de push)
-          INCREMENT_TYPE="${{ github.event.inputs.increment_type || 'patch' }}"
-          
-          # Récupère la version actuelle
-          CURRENT_VERSION=$(yq e '.version' ./Chart.yaml)
-          echo "Version actuelle: $CURRENT_VERSION"
-          
-          # Incrémente la version avec Python
-          NEW_VERSION=$(python -c "
-          import semver
-          
-          current = '$CURRENT_VERSION'
-          increment = '$INCREMENT_TYPE'
-          
-          version = semver.VersionInfo.parse(current)
-          
-          if increment == 'major':
-              new_version = str(version.bump_major())
-          elif increment == 'minor':
-              new_version = str(version.bump_minor())
-          else:
-              new_version = str(version.bump_patch())
-              
-          print(new_version)
-          ")
-          
-          echo "Nouvelle version: $NEW_VERSION"
-          
-          # Met à jour Chart.yaml
-          yq e -i '.version = "'$NEW_VERSION'"' ./Chart.yaml
-          
-          # Enregistre la nouvelle version pour les étapes suivantes
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          
-          # Commit les changements si workflow_dispatch, sinon utilise simplement la version mise à jour
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            git config --global user.name 'GitHub Actions'
-            git config --global user.email 'actions@github.com'
-            git add ./Chart.yaml
-            git commit -m "Mettre à jour la version du Chart à $NEW_VERSION"
-            git push
-          fi
+          import yaml
 
+          # Load the Chart.yaml file
+          with open('Chart.yaml', 'r') as file:
+              chart = yaml.safe_load(file)
+
+          # Increment the chart version
+          current_version = chart['version']
+          major, minor, patch = map(int, current_version.split('.'))
+          patch += 1
+          new_version = f"{major}.{minor}.{patch}"
+          chart['version'] = new_version
+
+          # Save the updated Chart.yaml
+          with open('Chart.yaml', 'w') as file:
+              yaml.safe_dump(chart, file)
+
+          # Output the new version
+          print(f"::set-output name=new_version::{new_version}")
+
+      - name: Commit updated Chart.yaml
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Chart.yaml
+          git commit -m "Increment Helm chart version to ${{ steps.increment_version.outputs.new_version }}"
+          git push
+          
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
