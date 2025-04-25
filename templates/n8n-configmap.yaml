@@ -9,6 +9,8 @@ data:
   N8N_BASIC_AUTH_USER: "n8n"
   N8N_SECURE_COOKIE: "false"
   N8N_PATH: "/n8n/"
+  N8N_EDITOR_BASE_URL: "https://k8sbys3bstn.com/n8n"
+  N8N_WEBHOOK_URL: "https://k8sbys3bstn.com/n8n"
 
 
 
