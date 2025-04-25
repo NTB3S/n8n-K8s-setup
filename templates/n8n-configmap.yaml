@@ -10,4 +10,4 @@ data:
   N8N_SECURE_COOKIE: "false"
   N8N_EDITOR_BASE_URL:
   N8N_HOST: "k8sbys3bstn.com"
-  N8N_EDITOR_BASE_URL: "/n8n/"
+  N8N_EDITOR_BASE_URL: "http://k8sbys3bstn.com/n8n"
