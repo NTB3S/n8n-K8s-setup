@@ -11,4 +11,4 @@ data:
   WEBHOOK_URL: "http://k8sbys3bstn.com/n8n"
   N8N_PATH: "/n8n"
   N8N_PUBLIC_API_DISABLED: "true"
-  N8N_ENDPOINT_REST: "/n8n/rest"
+  N8N_ENDPOINT_REST: "http://k8sbys3bstn.com/n8n/rest"
