@@ -11,7 +11,7 @@ spec:
   - host: k8sbys3bstn.com
     http:
       paths:
-      - path: /n8n
+      - path:
         pathType: Prefix
         backend:
           service:
