@@ -3,7 +3,6 @@ kind: Ingress
 metadata:
   annotations:
     nginx.org/mergeable-ingress-type: minion
-    nginx.ingress.kubernetes.io/rewrite-target: /
   name: n8n-ingress
 spec:
   ingressClassName: nginx
