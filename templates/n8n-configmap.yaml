@@ -10,5 +10,5 @@ data:
   N8N_SECURE_COOKIE: "false"
   WEBHOOK_TUNNEL_URL: "http://k8sbys3bstn.com/n8n" 
   N8N_PATH: "/n8n"
-  WEBHOOK_URL: "https://k8sbys3bstn.com/n8n"
+  WEBHOOK_URL: "http://k8sbys3bstn.com/n8n"
   
