@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
   name: n8n-ingress
   namespace: n8n
-  annotations:
-      nginx.org/mergeable-ingress-type: minion
 spec:
   ingressClassName: nginx
   rules:
