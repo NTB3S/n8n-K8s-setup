@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: n8n-ingress
+  namespace: argocd
   annotations:
       nginx.org/mergeable-ingress-type: minion
 spec:
