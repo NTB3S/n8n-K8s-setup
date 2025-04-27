@@ -10,4 +10,3 @@ data:
   N8N_SECURE_COOKIE: "false"
   WEBHOOK_URL: "http://k8sbys3bstn.com/n8n"
   N8N_PATH: "/n8n"
-  N8N_ENDPOINT_REST: "n8n/rest"
